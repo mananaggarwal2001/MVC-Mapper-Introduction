@@ -7,14 +7,27 @@ import com.mananluvtocode.SpringMVC.domain.Customer;
 import com.mananluvtocode.SpringMVC.repositories.CustomerRepository;
 import com.mananluvtocode.SpringMVC.services.CustomerService;
 import com.mananluvtocode.SpringMVC.services.ResourceNotFoundException;
+import org.jruby.anno.Coercion;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.restdocs.RestDocumentationExtension;
+import org.springframework.restdocs.constraints.ConstraintDescriptions;
+import org.springframework.restdocs.payload.FieldDescriptor;
+import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.util.StringUtils;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.Arrays;
 import java.util.List;
@@ -23,26 +36,33 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+//import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
+import static org.springframework.restdocs.snippet.Attributes.key;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+
+@AutoConfigureRestDocs
+@ExtendWith(RestDocumentationExtension.class)
+@WebMvcTest(controllers = CustomerController.class)
 class CustomerControllerTest {
-    @InjectMocks
-    private CustomerController customerController;
-    @Mock
+    @MockBean
     private CustomerService customerService;
 
     // this Object Mapper is used for binding the POJO class to the json as this uses the Jackson binding technique for doing the work.
     private ObjectMapper mapper;
-
+    @Autowired
     MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
         mapper = new ObjectMapper();
-        mockMvc = MockMvcBuilders.standaloneSetup(customerController).setControllerAdvice(new RestResponseEntityHandler()).build();
+        // mockMvc = MockMvcBuilders.standaloneSetup(customerController).setControllerAdvice(new RestResponseEntityHandler()).build();
     }
 
     @Test
@@ -77,7 +97,7 @@ class CustomerControllerTest {
         returnDTO.setLastName(customer.getLastName());
         returnDTO.setCustomer_url("/api/v1/customers/1");
         returnDTO.setId(1L);
-
+        ConstrainedFields constrainedFields= new ConstrainedFields(CustomerDTO.class);
         // object mapper is used for binding the pojo to the json manually as this uses the jakson binding for doing  this work.
         String finalvalue = mapper.writeValueAsString(customer);
         when(customerService.createNewCustomer(customer)).thenReturn(returnDTO);
@@ -94,11 +114,16 @@ class CustomerControllerTest {
 //                .andExpect(jsonPath("$.lastName").value(customer.getLastName()))
 //                .andExpect(jsonPath("$.customer_url").value(returnDTO.getCustomer_url()));
 
-        String response = mockMvc.perform(post("/api/v1/customers/")
+        mockMvc.perform(post("/api/v1/customers/")
                         .contentType(MediaType.APPLICATION_JSON).content(finalvalue).accept(MediaType.APPLICATION_JSON))
-                .andReturn().getResponse().getContentAsString();
+                .andDo(document("/v1/allValues", requestFields(
+                        constrainedFields.withPath("id").description("Id of the customer"),
+                        constrainedFields.withPath("firstName").description("Customer First Name is being made"),
+                        constrainedFields.withPath("lastName").description("Customer Last Name is documented"),
+                        constrainedFields.withPath("customer_url").description("Customer URL is being documented")
+                )));
 
-        System.out.println("The response of this request is :- " + response);
+//        System.out.println("The response of this request is :- " + response);
 
     }
 
@@ -164,5 +189,21 @@ class CustomerControllerTest {
         when(customerService.getCustomerByFirstName(anyString())).thenThrow(ResourceNotFoundException.class);
         mockMvc.perform(get("/api/v1/customers/foobar"))
                 .andExpect(status().isNotFound());
+    }
+
+
+    private static class ConstrainedFields {
+
+        private final ConstraintDescriptions constraintDescriptions;
+
+        ConstrainedFields(Class<?> input) {
+            this.constraintDescriptions = new ConstraintDescriptions(input);
+        }
+
+        private FieldDescriptor withPath(String path) {
+            return fieldWithPath(path).attributes(key("constraints").value(StringUtils
+                    .collectionToDelimitedString(this.constraintDescriptions
+                            .descriptionsForProperty(path), ". ")));
+        }
     }
 }
