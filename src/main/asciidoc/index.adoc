@@ -1,4 +1,4 @@
-= Manan Luv To Code Category Docs For doing the further work.
+= Manan Luv To Code Category Docs.
 Manan Aggarwal;
 :doctype: book
 :icons: font
