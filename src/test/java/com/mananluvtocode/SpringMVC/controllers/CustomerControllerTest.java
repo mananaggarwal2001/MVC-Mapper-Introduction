@@ -39,14 +39,13 @@ import static org.mockito.Mockito.when;
 //import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
-import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
-import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.snippet.Attributes.key;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
-@AutoConfigureRestDocs
+@AutoConfigureRestDocs(uriScheme = "https")
 @ExtendWith(RestDocumentationExtension.class)
 @WebMvcTest(controllers = CustomerController.class)
 class CustomerControllerTest {
@@ -81,10 +80,19 @@ class CustomerControllerTest {
         customerDTO.setFirstName("John");
         customerDTO.setLastName("Doe");
         when(customerService.getCustomerByFirstName("John")).thenReturn(customerDTO);
+
+        String customerName = "John";
+        ConstrainedFields constrainedFields= new ConstrainedFields(CustomerDTO.class);
         mockMvc.perform(get("/api/v1/customers/John")
                         .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstName").value("John"));
+                .andExpect(jsonPath("$.firstName").value("John"))
+                .andDo(document("/v1/customers-allcustomers",responseFields(
+                        constrainedFields.withPath("id").description("This is Id Field"),
+                        constrainedFields.withPath("firstName").description("FirstName Field"),
+                        constrainedFields.withPath("lastName").description("lastName Field"),
+                        constrainedFields.withPath("customer_url").description("This is URL Field")
+                )));
     }
 
     @Test
@@ -97,7 +105,7 @@ class CustomerControllerTest {
         returnDTO.setLastName(customer.getLastName());
         returnDTO.setCustomer_url("/api/v1/customers/1");
         returnDTO.setId(1L);
-        ConstrainedFields constrainedFields= new ConstrainedFields(CustomerDTO.class);
+        ConstrainedFields constrainedFields = new ConstrainedFields(CustomerDTO.class);
         // object mapper is used for binding the pojo to the json manually as this uses the jakson binding for doing  this work.
         String finalvalue = mapper.writeValueAsString(customer);
         when(customerService.createNewCustomer(customer)).thenReturn(returnDTO);
@@ -116,10 +124,10 @@ class CustomerControllerTest {
 
         mockMvc.perform(post("/api/v1/customers/")
                         .contentType(MediaType.APPLICATION_JSON).content(finalvalue).accept(MediaType.APPLICATION_JSON))
-                .andDo(document("/v1/allValues", requestFields(
-                        constrainedFields.withPath("id").description("Id of the customer"),
+                .andDo(document("/v1/customers-new", requestFields(
                         constrainedFields.withPath("firstName").description("Customer First Name is being made"),
                         constrainedFields.withPath("lastName").description("Customer Last Name is documented"),
+                        constrainedFields.withPath("id").description("Id of the customer"),
                         constrainedFields.withPath("customer_url").description("Customer URL is being documented")
                 )));
 

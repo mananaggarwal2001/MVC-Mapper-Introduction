@@ -1,9 +1,7 @@
 package com.mananluvtocode.SpringMVC.controllers;
-
 import com.mananluvtocode.SpringMVC.api.model.CategoryDTO;
 import com.mananluvtocode.SpringMVC.services.CategoryService;
 import com.mananluvtocode.SpringMVC.services.ResourceNotFoundException;
-import jakarta.validation.metadata.ElementDescriptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -89,7 +87,7 @@ class CategoryControllerTest {
         finalclass.setId(3L);
         when(categoryService.getCategoryByName(anyString())).thenReturn(finalclass);
         String name = "john";
-
+        ConstrainedFields constrainedFields= new ConstrainedFields(CategoryDTO.class);
         mockMvc.perform(get("/api/v1/categories/{categoryId}", name)
                         .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)
                         .param("extended Category", "Category Extension"))
@@ -98,8 +96,8 @@ class CategoryControllerTest {
                 .andDo(document("/v1/categoryByName", pathParameters(
                                 parameterWithName("categoryId").description("Id of the category")
                         ), responseFields(
-                                fieldWithPath("id").description("This is the Id of the john category class"),
-                                fieldWithPath("name").description("Name of the Category in the document.")
+                                constrainedFields.withPath("id").description("This is the Id of the john category class"),
+                                constrainedFields.withPath("name").description("Name of the Category in the document.")
                         )
 //                        requestParamters(
 //                        parameterWithName("extended Category").description("This is the request parameter introduction")
@@ -114,5 +112,21 @@ class CategoryControllerTest {
         mockMvc.perform(get("/api/v1/categories/john")
                         .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
+    }
+
+
+    private static class ConstrainedFields {
+
+        private final ConstraintDescriptions constraintDescriptions;
+
+        ConstrainedFields(Class<?> input) {
+            this.constraintDescriptions = new ConstraintDescriptions(input);
+        }
+
+        private FieldDescriptor withPath(String path) {
+            return fieldWithPath(path).attributes(key("constraints").value(StringUtils
+                    .collectionToDelimitedString(this.constraintDescriptions
+                            .descriptionsForProperty(path), ". ")));
+        }
     }
 }

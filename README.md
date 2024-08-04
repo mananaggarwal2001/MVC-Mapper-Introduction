@@ -15,6 +15,7 @@
 - `Spring RestDocs` plugin is used for creating the documentation for the controllers used in the project of the spring boot.
 - `ASCII doctor` maven plugin is used for combine all the final document results into the single documentation that will be provided to us.
 - I learned this new concepts that how to generate the documentation using the restdocs template for the constraint that is provided to the variables in the CustomerDTO classes.
+- I learned this new concepts that how to update the URI schema like HTTP which is shown in the docs when the documents are being generated. The annotation which is used is `@AutoConfigurableRestDocs` for the configuration to take place in the rest docs.
 #### New Dependencies
 ```angular2html
 - MapStruct for mapping classes automatically when the project is building

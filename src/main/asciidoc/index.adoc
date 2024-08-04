@@ -1,0 +1,50 @@
+= Manan Luv To Code Category Docs For doing the further work.
+Manan Aggarwal;
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+
+Sample application demonstrating how to use Spring REST Docs with JUnit 5.
+
+`Category Controller Test and Customer Controller test` makes a call to a very simple service and produces three
+documentation snippets.
+
+GET BEER
+
+One showing how to make a request using cURL:
+
+include::{snippets}/v1/categoryByName/curl-request.adoc[]
+
+One showing the HTTP request:
+
+include::{snippets}/v1/categoryByName/http-request.adoc[]
+
+And one showing the HTTP response:
+
+include::{snippets}/v1/categoryByName/http-response.adoc[]
+
+Response Body:
+include::{snippets}/v1/categoryByName/response-body.adoc[]
+
+Response Fields:
+include::{snippets}/v1/categoryByName/response-fields.adoc[]
+
+NEW BEER
+
+One showing how to make a request using cURL:
+
+include::{snippets}/v1/categoryByName/curl-request.adoc[]
+
+One showing the HTTP request:
+
+include::{snippets}/v1/categoryByName/http-request.adoc[]
+
+And one showing the HTTP response:
+
+include::{snippets}/v1/categoryByName/http-response.adoc[]
+
+Response Body:
+include::{snippets}/v1/categoryByName/response-body.adoc[]
+
+Request Fields
+include::{snippets}/v1/customers-new/request-fields.adoc[]
